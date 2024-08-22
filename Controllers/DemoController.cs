@@ -8,7 +8,7 @@ namespace CRDOrderService.Controllers
     [Route("api")]
     public class DemoController : ControllerBase
     {
-        private static readonly ConcurrentDictionary<string, TaskCompletionSource<object>> _emitters = new ConcurrentDictionary<string, TaskCompletionSource<object>>();
+        public static readonly ConcurrentDictionary<string, TaskCompletionSource<object>> _emitters = new ConcurrentDictionary<string, TaskCompletionSource<object>>();
 
         [HttpGet("start/{id}")]
         public async Task Start(string id)
@@ -22,7 +22,7 @@ namespace CRDOrderService.Controllers
                 Response.Headers.Add("Connection", "keep-alive");
 
                 // Set up a timeout for the Task
-                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(5)); // Timeout after 5 seconds
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(100)); // Timeout after 100 seconds
                 var completedTask = await Task.WhenAny(emitter.Task, timeoutTask);
 
                 if (completedTask == timeoutTask)

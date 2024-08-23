@@ -16,8 +16,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection();
-
 app.MapControllers();
 
 Console.WriteLine("Creating pubsub subscriber");

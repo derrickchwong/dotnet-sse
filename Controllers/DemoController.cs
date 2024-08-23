@@ -8,22 +8,21 @@ namespace CRDOrderService.Controllers
     [Route("api")]
     public class DemoController : ControllerBase
     {
-        public static readonly ConcurrentDictionary<string, TaskCompletionSource<object>> _emitters = new ConcurrentDictionary<string, TaskCompletionSource<object>>();
+        public static readonly ConcurrentDictionary<string, TaskCompletionSource<object>> _tcs = new ConcurrentDictionary<string, TaskCompletionSource<object>>();
 
         [HttpGet("start/{id}")]
         public async Task Start(string id)
         {
-            var emitter = new TaskCompletionSource<object>();
-            if (_emitters.TryAdd(id, emitter)){
-                // _emitters[id] = emitter;
+            var tcs = new TaskCompletionSource<object>();
+            if (_tcs.TryAdd(id, tcs)){
 
-                Response.Headers.Add("Content-Type", "text/event-stream");
+                Response.Headers.Add("Content-Type", "application/json");
                 Response.Headers.Add("Cache-Control", "no-cache");
                 Response.Headers.Add("Connection", "keep-alive");
 
                 // Set up a timeout for the Task
                 var timeoutTask = Task.Delay(TimeSpan.FromSeconds(100)); // Timeout after 100 seconds
-                var completedTask = await Task.WhenAny(emitter.Task, timeoutTask);
+                var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
 
                 if (completedTask == timeoutTask)
                 {
@@ -38,7 +37,7 @@ namespace CRDOrderService.Controllers
                 else
                 {
                     // emitter.Task completed successfully
-                    var result = await emitter.Task;
+                    var result = await tcs.Task;
                     await Response.BodyWriter.WriteAsync(System.Text.Encoding.UTF8.GetBytes($"data: {result}\n\n"));
                 }
 
@@ -54,13 +53,13 @@ namespace CRDOrderService.Controllers
         public IActionResult Push([FromBody] MessageData data, string id)
         {
             
-            if (_emitters.TryGetValue(id, out var emitter))
+            if (_tcs.TryGetValue(id, out var tcs))
             {
                 string message = data.message;
 
-                emitter.SetResult(message);
+                tcs.SetResult(message);
                 
-                emitter.TrySetCanceled();
+                tcs.TrySetCanceled();
                 
                 return Ok();
             }

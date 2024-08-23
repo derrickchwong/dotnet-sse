@@ -28,15 +28,11 @@ namespace CRDOrderService.Controllers
                 {
                     // Timeout occurred
                     Response.StatusCode = 408; // Request Timeout
-                    
-                    // TODO send a cancel message to pubsub 
-
                     await Response.BodyWriter.WriteAsync(System.Text.Encoding.UTF8.GetBytes($"data: Timeout\n\n"));
                     
                 }
                 else
                 {
-                    // emitter.Task completed successfully
                     var result = await tcs.Task;
                     await Response.BodyWriter.WriteAsync(System.Text.Encoding.UTF8.GetBytes($"data: {result}\n\n"));
                 }
@@ -56,11 +52,8 @@ namespace CRDOrderService.Controllers
             if (_tcs.TryGetValue(id, out var tcs))
             {
                 string message = data.message;
-
                 tcs.SetResult(message);
-                
                 tcs.TrySetCanceled();
-                
                 return Ok();
             }
 
